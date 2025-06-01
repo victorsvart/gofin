@@ -1,0 +1,47 @@
+services:
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - DSN=postgres://postgres:postgres@db/ecommerce?sslmode=disable
+  #     - LOCAL_ADMIN_PASSWORD=123qwe
+  #     - LOCAL_USER_PASSWORD=123qwe
+  #     - APP_SECRET=<exampleeeeeeeeeeechangeifyouwant>
+  #     - SECURE_TOKEN=false
+  #   ports:
+  #     - 8080:8080
+  #   volumes:
+  #     - ./:/app
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+
+  # front:
+  #   build:
+  #     context: ./react/
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - PUBLIC_API_URL=http://ecommerce-app-1:8080/v1/api
+  #   ports:
+  #     - 3000:3000
+
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ecommerce
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -20,6 +20,8 @@ type ErrorTarget string
 var (
 	AUTH          ErrorTarget = "auth"
 	EMAIL_CONFIRM ErrorTarget = "emailconfirm"
+	QUERY         ErrorTarget = "query"
+	DB            ErrorTarget = "database"
 )
 
 type AppError struct {

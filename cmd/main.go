@@ -6,6 +6,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/victorsvart/gofin/docs"
 	"github.com/victorsvart/gofin/internal/infra/gin/routing"
+	"github.com/victorsvart/gofin/internal/infra/pg"
 )
 
 // @title           GoFin
@@ -18,6 +19,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	_ = pg.SetupDB()
 
 	server := routing.SetRoutes()
 	server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
