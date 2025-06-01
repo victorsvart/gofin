@@ -7,7 +7,7 @@ import (
 )
 
 func OK(c *gin.Context, a any) {
-	c.JSON(http.StatusBadRequest, a)
+	c.JSON(http.StatusOK, a)
 }
 
 func BadRequest(c *gin.Context, a any) {

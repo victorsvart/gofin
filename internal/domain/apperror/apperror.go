@@ -23,10 +23,10 @@ var (
 )
 
 type AppError struct {
-	Value  any
-	Target ErrorTarget
-	Type   ErrorType
-	Detail error
+	Value  any         `json:"value"`
+	Target ErrorTarget `json:"target"`
+	Type   ErrorType   `json:"type"`
+	Detail error       `json:"detail"`
 }
 
 func (ae *AppError) MarshalJSON() ([]byte, error) {

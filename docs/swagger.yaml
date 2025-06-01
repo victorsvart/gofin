@@ -1,0 +1,166 @@
+basePath: /api/v1
+definitions:
+  apperror.AppError:
+    properties:
+      detail: {}
+      target:
+        type: string
+      type:
+        type: string
+      value: {}
+    type: object
+  cognito.ConfirmEmailRequest:
+    properties:
+      code:
+        type: string
+      username:
+        type: string
+    required:
+    - code
+    - username
+    type: object
+  cognito.SignInRequest:
+    properties:
+      emailAddress:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - emailAddress
+    - password
+    - username
+    type: object
+  cognito.SignInResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+      refreshToken:
+        type: string
+      tokenType:
+        type: string
+    type: object
+  cognito.SignUpRequest:
+    properties:
+      emailAddress:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - emailAddress
+    - name
+    - password
+    - username
+    type: object
+  cognito.SignUpResponse:
+    properties:
+      emailConfirmed:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Api for GoFin App.
+  title: GoFin
+  version: "1.0"
+paths:
+  /auth/confirmemail:
+    post:
+      consumes:
+      - application/json
+      description: Confirm user account using a confirmation code
+      parameters:
+      - description: Email Confirmation Request
+        in: body
+        name: ConfirmEmailRequest
+        required: true
+        schema:
+          $ref: '#/definitions/cognito.ConfirmEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Confirm user's email
+      tags:
+      - Auth
+  /auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return access and refresh tokens
+      parameters:
+      - description: Sign In Request
+        in: body
+        name: SignInRequest
+        required: true
+        schema:
+          $ref: '#/definitions/cognito.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cognito.SignInResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Sign in a user
+      tags:
+      - Auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Sign Up Request
+        in: body
+        name: SignUpRequest
+        required: true
+        schema:
+          $ref: '#/definitions/cognito.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cognito.SignUpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Register a new user
+      tags:
+      - Auth
+swagger: "2.0"

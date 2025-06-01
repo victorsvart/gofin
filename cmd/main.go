@@ -1,29 +1,26 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/victorsvart/gofin/internal/handler"
-	"github.com/victorsvart/gofin/internal/infra/cognito"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/victorsvart/gofin/docs"
+	"github.com/victorsvart/gofin/internal/infra/gin/routing"
 )
 
+// @title           GoFin
+// @version         1.0
+// @description     Api for GoFin App.
+// @host            localhost:8080
+// @BasePath        /api/v1
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		panic(err)
 	}
 
-	cognito := cognito.NewCognitoActor()
-	authHandler := handler.NewAuthHandler(cognito)
-
-	server := gin.Default()
-	api := server.Group("/api/auth")
-	{
-		api.POST("signin", authHandler.SignIn)
-		api.POST("signup", authHandler.SignUp)
-		api.POST("confirmemail", authHandler.ConfirmEmail)
-	}
-
+	server := routing.SetRoutes()
+	server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	if err := server.Run(); err != nil {
 		panic(err)
 	}
