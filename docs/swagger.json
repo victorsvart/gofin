@@ -1,0 +1,251 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Api for GoFin App.",
+        "title": "GoFin",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/auth/confirmemail": {
+            "post": {
+                "description": "Confirm user account using a confirmation code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Confirm user's email",
+                "parameters": [
+                    {
+                        "description": "Email Confirmation Request",
+                        "name": "ConfirmEmailRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cognito.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.AppError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.AppError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/signin": {
+            "post": {
+                "description": "Authenticate a user and return access and refresh tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Sign in a user",
+                "parameters": [
+                    {
+                        "description": "Sign In Request",
+                        "name": "SignInRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cognito.SignInRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/cognito.SignInResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.AppError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.AppError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/signup": {
+            "post": {
+                "description": "Create a new user account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "Sign Up Request",
+                        "name": "SignUpRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cognito.SignUpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/cognito.SignUpResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.AppError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apperror.AppError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "apperror.AppError": {
+            "type": "object",
+            "properties": {
+                "detail": {},
+                "target": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "cognito.ConfirmEmailRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "username"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "cognito.SignInRequest": {
+            "type": "object",
+            "required": [
+                "emailAddress",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "emailAddress": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "cognito.SignInResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "expiresIn": {
+                    "type": "integer"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "tokenType": {
+                    "type": "string"
+                }
+            }
+        },
+        "cognito.SignUpRequest": {
+            "type": "object",
+            "required": [
+                "emailAddress",
+                "name",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "emailAddress": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "cognito.SignUpResponse": {
+            "type": "object",
+            "properties": {
+                "emailConfirmed": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

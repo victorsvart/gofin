@@ -1,4 +1,4 @@
-package cognito
+package cognitousecase
 
 import (
 	"context"
@@ -11,25 +11,18 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	cognito "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	provider "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/victorsvart/gofin/internal/domain/apperror"
-	"github.com/victorsvart/gofin/internal/domain/structs"
+	"github.com/victorsvart/gofin/internal/domain/structs/cognito"
 )
 
-type cognitoActions struct {
-	Client *cognito.Client
+type cognitoUseCases struct {
+	Client *provider.Client
 }
 
-func NewCognitoActor() structs.Cognito {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-2"))
-	if err != nil {
-		panic(err)
-	}
-
-	client := cognito.NewFromConfig(cfg)
-	return &cognitoActions{Client: client}
+func NewCognitoUseCases(client *provider.Client) cognito.CognitoUseCases {
+	return &cognitoUseCases{Client: client}
 }
 
 func userPoolID() string {
@@ -65,12 +58,12 @@ func computeSecretHash(username string) string {
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
-func (actor cognitoActions) SignIn(ctx context.Context,
+func (actor cognitoUseCases) SignIn(ctx context.Context,
 	userName string,
 	password string,
-) (*types.AuthenticationResultType, *apperror.AppError) {
+) (*cognito.SignInResponse, *apperror.AppError) {
 	var authResult *types.AuthenticationResultType
-	output, err := actor.Client.InitiateAuth(ctx, &cognito.InitiateAuthInput{
+	output, err := actor.Client.InitiateAuth(ctx, &provider.InitiateAuthInput{
 		AuthFlow:       "USER_PASSWORD_AUTH",
 		ClientId:       aws.String(clientID()),
 		AuthParameters: map[string]string{"USERNAME": userName, "PASSWORD": password},
@@ -92,17 +85,18 @@ func (actor cognitoActions) SignIn(ctx context.Context,
 		authResult = output.AuthenticationResult
 	}
 
-	return authResult, nil
+	response := cognito.MapToSignInResponse(authResult)
+	return &response, nil
 }
 
-func (actor cognitoActions) SignUp(ctx context.Context,
+func (actor cognitoUseCases) SignUp(ctx context.Context,
 	userName string,
 	password string,
 	userEmail string,
 	userFullName string,
-) (bool, *apperror.AppError) {
-	confirmed := false
-	output, err := actor.Client.SignUp(ctx, &cognito.SignUpInput{
+) (*cognito.SignUpResponse, *apperror.AppError) {
+	var response cognito.SignUpResponse
+	output, err := actor.Client.SignUp(ctx, &provider.SignUpInput{
 		ClientId:   aws.String(clientID()),
 		Password:   aws.String(password),
 		Username:   aws.String(userName),
@@ -116,24 +110,24 @@ func (actor cognitoActions) SignUp(ctx context.Context,
 	if err != nil {
 		var invalidPassword *types.InvalidPasswordException
 		if errors.As(err, &invalidPassword) {
-			return false, apperror.NewAppError(
+			return nil, apperror.NewAppError(
 				userName,
 				apperror.AUTH,
 				apperror.INVALID,
 				errors.New(*invalidPassword.Message),
 			)
 		} else {
-			return false, apperror.NewAppError(userName, apperror.AUTH, apperror.INTERNAL, err)
+			return nil, apperror.NewAppError(userName, apperror.AUTH, apperror.INTERNAL, err)
 		}
 	} else {
-		confirmed = output.UserConfirmed
+		response.EmailConfirmed = output.UserConfirmed
 	}
 
-	return confirmed, nil
+	return &response, nil
 }
 
-func (actor cognitoActions) ConfirmEmail(ctx context.Context, userName, confirmationCode string) *apperror.AppError {
-	_, err := actor.Client.ConfirmSignUp(ctx, &cognito.ConfirmSignUpInput{
+func (actor cognitoUseCases) ConfirmEmail(ctx context.Context, userName, confirmationCode string) *apperror.AppError {
+	_, err := actor.Client.ConfirmSignUp(ctx, &provider.ConfirmSignUpInput{
 		ClientId:         aws.String(clientID()),
 		ConfirmationCode: aws.String(confirmationCode),
 		Username:         aws.String(userName),
@@ -158,12 +152,12 @@ func (actor cognitoActions) ConfirmEmail(ctx context.Context, userName, confirma
 	return nil
 }
 
-func (actor cognitoActions) AdminCreateUser(
+func (actor cognitoUseCases) AdminCreateUser(
 	ctx context.Context,
 	userName string,
 	userEmail string,
 ) *apperror.AppError {
-	_, err := actor.Client.AdminCreateUser(ctx, &cognito.AdminCreateUserInput{
+	_, err := actor.Client.AdminCreateUser(ctx, &provider.AdminCreateUserInput{
 		UserPoolId:     aws.String(userPoolID()),
 		Username:       aws.String(userName),
 		MessageAction:  types.MessageActionTypeSuppress,
@@ -181,12 +175,12 @@ func (actor cognitoActions) AdminCreateUser(
 	return nil
 }
 
-func (actor cognitoActions) AdminSetUserPassword(
+func (actor cognitoUseCases) AdminSetUserPassword(
 	ctx context.Context,
 	userName string,
 	password string,
 ) *apperror.AppError {
-	_, err := actor.Client.AdminSetUserPassword(ctx, &cognito.AdminSetUserPasswordInput{
+	_, err := actor.Client.AdminSetUserPassword(ctx, &provider.AdminSetUserPasswordInput{
 		Password:   aws.String(password),
 		UserPoolId: aws.String(userPoolID()),
 		Username:   aws.String(userName),
@@ -206,13 +200,13 @@ func (actor cognitoActions) AdminSetUserPassword(
 	return nil
 }
 
-func (actor cognitoActions) ConfirmForgotPassword(
+func (actor cognitoUseCases) ConfirmForgotPassword(
 	ctx context.Context,
 	code string,
 	userName string,
 	password string,
 ) *apperror.AppError {
-	_, err := actor.Client.ConfirmForgotPassword(ctx, &cognito.ConfirmForgotPasswordInput{
+	_, err := actor.Client.ConfirmForgotPassword(ctx, &provider.ConfirmForgotPasswordInput{
 		ClientId:         aws.String(clientID()),
 		ConfirmationCode: aws.String(code),
 		Password:         aws.String(password),
@@ -241,8 +235,8 @@ func (actor cognitoActions) ConfirmForgotPassword(
 	return nil
 }
 
-func (actor cognitoActions) DeleteUser(ctx context.Context, userAccessToken string) *apperror.AppError {
-	_, err := actor.Client.DeleteUser(ctx, &cognito.DeleteUserInput{
+func (actor cognitoUseCases) DeleteUser(ctx context.Context, userAccessToken string) *apperror.AppError {
+	_, err := actor.Client.DeleteUser(ctx, &provider.DeleteUserInput{
 		AccessToken: aws.String(userAccessToken),
 	})
 	if err != nil {
@@ -252,11 +246,11 @@ func (actor cognitoActions) DeleteUser(ctx context.Context, userAccessToken stri
 	return nil
 }
 
-func (actor cognitoActions) ForgotPassword(ctx context.Context,
+func (actor cognitoUseCases) ForgotPassword(ctx context.Context,
 	clientId string,
 	userName string,
 ) (*types.CodeDeliveryDetailsType, *apperror.AppError) {
-	output, err := actor.Client.ForgotPassword(ctx, &cognito.ForgotPasswordInput{
+	output, err := actor.Client.ForgotPassword(ctx, &provider.ForgotPasswordInput{
 		ClientId: aws.String(clientId),
 		Username: aws.String(userName),
 	})
